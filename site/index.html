@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Xoài tròn 2 tuổi! · Thư mời sinh nhật</title>
-<meta name="description" content="Mời bạn đến dự sinh nhật 2 tuổi của bé Xoài (Tường San) tại S202.2508 Vinhomes Smart City.">
+<meta name="description" content="Mời bạn đến dự sinh nhật 2 tuổi của bé Xoài (Tường San) lúc 20h Thứ Bảy 31/10/2026 tại S202.2508 Vinhomes Smart City.">
 <meta name="theme-color" content="#f6d24c">
 <link rel="canonical" href="https://xoai.technet.software/">
 <meta property="og:type" content="website">
@@ -12,17 +12,17 @@
 <meta property="og:locale" content="vi_VN">
 <meta property="og:url" content="https://xoai.technet.software/">
 <meta property="og:title" content="Mời bạn dự sinh nhật 2 tuổi của bé Xoài!">
-<meta property="og:description" content="Toà S2.02 · Căn 2508 · Vinhomes Smart City. Bấm để xem thư mời và xác nhận tham dự nha.">
-<meta property="og:image" content="https://xoai.technet.software/assets/og.jpg">
-<meta property="og:image:secure_url" content="https://xoai.technet.software/assets/og.jpg">
+<meta property="og:description" content="20h Thứ Bảy 31/10 · Toà S2.02 · Căn 2508 · Vinhomes Smart City. Bấm để xem thư mời và xác nhận tham dự nha.">
+<meta property="og:image" content="https://xoai.technet.software/assets/og.jpg?v=2">
+<meta property="og:image:secure_url" content="https://xoai.technet.software/assets/og.jpg?v=2">
 <meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Thư mời sinh nhật: bé Xoài tròn 2 tuổi, váy vàng, nền xoài vàng">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Mời bạn dự sinh nhật 2 tuổi của bé Xoài!">
-<meta name="twitter:description" content="Toà S2.02 · Căn 2508 · Vinhomes Smart City. Bấm để xem thư mời và xác nhận tham dự nha.">
-<meta name="twitter:image" content="https://xoai.technet.software/assets/og.jpg">
+<meta name="twitter:description" content="20h Thứ Bảy 31/10 · Toà S2.02 · Căn 2508 · Vinhomes Smart City. Bấm để xem thư mời và xác nhận tham dự nha.">
+<meta name="twitter:image" content="https://xoai.technet.software/assets/og.jpg?v=2">
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
@@ -61,6 +61,15 @@ h1,h2,h3,p{margin:0}
 .btn{display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:10px 20px;background:var(--cream);border:3px solid var(--ink);border-radius:999px;box-shadow:4px 4px 0 var(--ink);font:700 15px/1 var(--body);cursor:pointer;transition:transform .12s,box-shadow .12s}
 .btn:hover{transform:translate(-1px,-1px);box-shadow:5px 5px 0 var(--ink)}
 .btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--ink)}
+
+.music{position:fixed;left:clamp(10px,1.6vw,24px);bottom:max(16px,env(safe-area-inset-bottom));z-index:20;width:48px;height:48px;display:flex;align-items:center;justify-content:center;padding:0;background:var(--cream);border:3px solid var(--ink);border-radius:50%;box-shadow:4px 4px 0 var(--ink);font:800 24px/1 var(--display);cursor:pointer;transition:transform .12s,box-shadow .12s,background .2s}
+.music:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--ink)}
+.music::after{content:"";position:absolute;width:30px;height:3px;border-radius:2px;background:var(--ink);transform:rotate(-45deg)}
+.music[aria-pressed="true"]{background:var(--yellow)}
+.music[aria-pressed="true"]::after{display:none}
+.music[aria-pressed="true"] span{display:block;animation:sway 1.4s ease-in-out infinite}
+@keyframes sway{0%,100%{transform:rotate(-12deg)}50%{transform:rotate(12deg) translateY(-2px)}}
+@media (prefers-reduced-motion:reduce){.music[aria-pressed="true"] span{animation:none}}
 
 .nav{position:fixed;right:clamp(2px,1.2vw,20px);top:50%;transform:translateY(-50%);z-index:20;display:flex;flex-direction:column;gap:2px}
 .nav button{width:28px;height:34px;display:flex;align-items:center;justify-content:center;background:none;border:0;padding:0;cursor:pointer}
@@ -176,6 +185,8 @@ textarea.input{font-size:16px;line-height:1.45;resize:none;min-height:0}
 </style>
 </head>
 <body>
+<button type="button" class="music" id="music" aria-pressed="false" aria-label="Nhạc chúc mừng sinh nhật" title="Bật/tắt nhạc"><span aria-hidden="true">♪</span></button>
+
 <main id="scroller">
 
   <nav class="nav" aria-label="Chuyển trang">

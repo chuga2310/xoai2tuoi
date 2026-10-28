@@ -3,7 +3,7 @@ const CONFIG = {
   tuoi: 2,
   // Thời gian bữa tiệc theo giờ Việt Nam, dạng 'YYYY-MM-DD HH:mm' (VD '2026-11-15 17:30').
   // Để '' khi chưa chốt — trang sẽ hiện "Sắp có".
-  thoiGian: '',
+  thoiGian: '2026-10-31 20:00',
   diaChi: 'S202.2508 Vinhomes Smart City, Tây Mỗ, Hà Nội',
 };
 
@@ -89,6 +89,99 @@ document.querySelectorAll('[data-strip]').forEach((b) => b.addEventListener('cli
   };
   tick();
   setInterval(tick, 1000);
+})();
+
+/* Nhạc "Happy Birthday" kiểu hộp nhạc — tổng hợp bằng Web Audio, không cần file.
+   Trình duyệt chặn tự phát, nên nhạc bắt đầu ở lần chạm/bấm đầu tiên (trừ khi khách đã tắt). */
+(function setupMusic() {
+  const btn = $('music');
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) { btn.hidden = true; return; }
+  const OFF_KEY = 'xoai-music-off';
+  const BEAT = 60 / 132;
+  // [nốt MIDI, số phách]; mỗi dòng 6 phách, bắt đầu bằng phách đà "Hap-py".
+  const MELODY = [
+    [67, .75], [67, .25], [69, 1], [67, 1], [72, 1], [71, 2],
+    [67, .75], [67, .25], [69, 1], [67, 1], [74, 1], [72, 2],
+    [67, .75], [67, .25], [79, 1], [76, 1], [72, 1], [71, 1], [69, 1],
+    [77, .75], [77, .25], [76, 1], [72, 1], [74, 1], [72, 3],
+  ];
+  const BASS = [48, 43, 43, 48, 41, 41, 48, 48]; // nốt trầm đầu mỗi ô nhịp 3/4
+  const LOOP_BEATS = 1 + BASS.length * 3 + 6;
+  const hz = (m) => 440 * 2 ** ((m - 69) / 12);
+
+  let ctx = null;
+  let master = null;
+  let timer = 0;
+  let playing = false;
+  const isOff = () => { try { return localStorage.getItem(OFF_KEY) === '1'; } catch { return false; } };
+  const saveOff = (off) => { try { localStorage.setItem(OFF_KEY, off ? '1' : '0'); } catch {} };
+
+  function tone(m, t, len, vol, type) {
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = type;
+    o.frequency.value = hz(m);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+    o.connect(g).connect(master);
+    o.start(t);
+    o.stop(t + len + 0.05);
+  }
+
+  function round(t0) {
+    let t = t0;
+    MELODY.forEach(([m, beats]) => {
+      const len = Math.max(0.9, beats * BEAT * 1.4);
+      tone(m, t, len, 0.32, 'sine');
+      tone(m + 12, t, len * 0.6, 0.07, 'sine'); // tiếng "ting" hộp nhạc
+      t += beats * BEAT;
+    });
+    BASS.forEach((m, i) => tone(m, t0 + (1 + i * 3) * BEAT, 3 * BEAT, 0.12, 'triangle'));
+    const next = t0 + LOOP_BEATS * BEAT;
+    timer = setTimeout(() => round(next), (next - ctx.currentTime - 0.3) * 1000);
+  }
+
+  function start() {
+    if (playing) return;
+    if (!ctx) ctx = new AC();
+    ctx.resume();
+    master = ctx.createGain();
+    master.gain.value = 0.6;
+    master.connect(ctx.destination);
+    playing = true;
+    btn.setAttribute('aria-pressed', 'true');
+    round(ctx.currentTime + 0.15);
+  }
+
+  function stop() {
+    if (!playing) return;
+    clearTimeout(timer);
+    const m = master;
+    m.gain.setTargetAtTime(0, ctx.currentTime, 0.05);
+    setTimeout(() => m.disconnect(), 400);
+    playing = false;
+    btn.setAttribute('aria-pressed', 'false');
+  }
+
+  btn.addEventListener('click', () => {
+    if (playing) { stop(); saveOff(true); } else { start(); saveOff(false); }
+  });
+
+  const firstTouch = (e) => {
+    window.removeEventListener('pointerdown', firstTouch);
+    window.removeEventListener('keydown', firstTouch);
+    if (btn.contains(e.target) || isOff()) return;
+    start();
+  };
+  window.addEventListener('pointerdown', firstTouch);
+  window.addEventListener('keydown', firstTouch);
+
+  let resumeOnShow = false;
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { resumeOnShow = playing; stop(); } else if (resumeOnShow) start();
+  });
 })();
 
 /* Xác nhận tham dự */
