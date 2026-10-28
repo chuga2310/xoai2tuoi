@@ -92,12 +92,12 @@ document.querySelectorAll('[data-strip]').forEach((b) => b.addEventListener('cli
 })();
 
 /* Nhạc "Happy Birthday" kiểu hộp nhạc — tổng hợp bằng Web Audio, không cần file.
-   Trình duyệt chặn tự phát, nên nhạc bắt đầu ở lần chạm/bấm đầu tiên (trừ khi khách đã tắt). */
+   Mặc định bật: thử phát ngay khi mở trang; nếu trình duyệt chặn tự phát (điện thoại luôn chặn)
+   thì nhạc vang lên ở lần chạm/bấm đầu tiên. Khách tắt bằng nút ♪ ở góc trái. */
 (function setupMusic() {
   const btn = $('music');
   const AC = window.AudioContext || window.webkitAudioContext;
   if (!AC) { btn.hidden = true; return; }
-  const OFF_KEY = 'xoai-music-off';
   const BEAT = 60 / 132;
   // [nốt MIDI, số phách]; mỗi dòng 6 phách, bắt đầu bằng phách đà "Hap-py".
   const MELODY = [
@@ -114,8 +114,7 @@ document.querySelectorAll('[data-strip]').forEach((b) => b.addEventListener('cli
   let master = null;
   let timer = 0;
   let playing = false;
-  const isOff = () => { try { return localStorage.getItem(OFF_KEY) === '1'; } catch { return false; } };
-  const saveOff = (off) => { try { localStorage.setItem(OFF_KEY, off ? '1' : '0'); } catch {} };
+  let waiting = false; // đã bật nhưng trình duyệt chưa cho phát
 
   function tone(m, t, len, vol, type) {
     const o = ctx.createOscillator();
@@ -145,19 +144,25 @@ document.querySelectorAll('[data-strip]').forEach((b) => b.addEventListener('cli
 
   function start() {
     if (playing) return;
-    if (!ctx) ctx = new AC();
-    ctx.resume();
+    if (!ctx) {
+      ctx = new AC();
+      ctx.addEventListener('statechange', () => {
+        if (ctx.state === 'running' && waiting) { waiting = false; round(ctx.currentTime + 0.15); }
+      });
+    }
     master = ctx.createGain();
     master.gain.value = 0.6;
     master.connect(ctx.destination);
     playing = true;
     btn.setAttribute('aria-pressed', 'true');
-    round(ctx.currentTime + 0.15);
+    if (ctx.state === 'running') round(ctx.currentTime + 0.15);
+    else { waiting = true; ctx.resume(); }
   }
 
   function stop() {
     if (!playing) return;
     clearTimeout(timer);
+    waiting = false;
     const m = master;
     m.gain.setTargetAtTime(0, ctx.currentTime, 0.05);
     setTimeout(() => m.disconnect(), 400);
@@ -166,17 +171,21 @@ document.querySelectorAll('[data-strip]').forEach((b) => b.addEventListener('cli
   }
 
   btn.addEventListener('click', () => {
-    if (playing) { stop(); saveOff(true); } else { start(); saveOff(false); }
+    if (waiting) ctx.resume(); // nhạc đang chờ được phép phát → chạm nút là phát, không tắt
+    else if (playing) stop();
+    else start();
   });
 
-  const firstTouch = (e) => {
-    window.removeEventListener('pointerdown', firstTouch);
-    window.removeEventListener('keydown', firstTouch);
-    if (btn.contains(e.target) || isOff()) return;
-    start();
+  // Mỗi trình duyệt chỉ "mở khoá" âm thanh với vài loại thao tác (trên điện thoại là lúc nhấc tay).
+  const UNLOCK = ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown'];
+  const unlock = (e) => {
+    if (btn.contains(e.target)) return;
+    if (waiting) ctx.resume();
+    if (!ctx || ctx.state === 'running') UNLOCK.forEach((t) => window.removeEventListener(t, unlock, true));
   };
-  window.addEventListener('pointerdown', firstTouch);
-  window.addEventListener('keydown', firstTouch);
+  UNLOCK.forEach((t) => window.addEventListener(t, unlock, true));
+
+  start();
 
   let resumeOnShow = false;
   document.addEventListener('visibilitychange', () => {
